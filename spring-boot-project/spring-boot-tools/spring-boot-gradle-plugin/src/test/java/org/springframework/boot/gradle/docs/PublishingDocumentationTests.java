@@ -33,19 +33,19 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Jean-Baptiste Nizet
  */
 @ExtendWith(GradleMultiDslExtension.class)
-public class PublishingDocumentationTests {
+class PublishingDocumentationTests {
 
 	GradleBuild gradleBuild;
 
 	@TestTemplate
-	public void mavenUpload() throws IOException {
-		assertThat(this.gradleBuild.script("src/main/gradle/publishing/maven").build("deployerRepository").getOutput())
+	void mavenUpload() throws IOException {
+		assertThat(this.gradleBuild.script("src/docs/gradle/publishing/maven").build("deployerRepository").getOutput())
 				.contains("https://repo.example.com");
 	}
 
 	@TestTemplate
-	public void mavenPublish() throws IOException {
-		assertThat(this.gradleBuild.script("src/main/gradle/publishing/maven-publish").build("publishingConfiguration")
+	void mavenPublish() throws IOException {
+		assertThat(this.gradleBuild.script("src/docs/gradle/publishing/maven-publish").build("publishingConfiguration")
 				.getOutput()).contains("MavenPublication").contains("https://repo.example.com");
 	}
 

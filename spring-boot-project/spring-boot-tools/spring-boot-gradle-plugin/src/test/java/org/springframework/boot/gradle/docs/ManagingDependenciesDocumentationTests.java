@@ -33,32 +33,32 @@ import static org.junit.jupiter.api.Assumptions.assumingThat;
  * @author Jean-Baptiste Nizet
  */
 @ExtendWith(GradleMultiDslExtension.class)
-public class ManagingDependenciesDocumentationTests {
+class ManagingDependenciesDocumentationTests {
 
 	GradleBuild gradleBuild;
 
 	@TestTemplate
-	public void dependenciesExampleEvaluatesSuccessfully() {
-		this.gradleBuild.script("src/main/gradle/managing-dependencies/dependencies").build();
+	void dependenciesExampleEvaluatesSuccessfully() {
+		this.gradleBuild.script("src/docs/gradle/managing-dependencies/dependencies").build();
 	}
 
 	@TestTemplate
-	public void customManagedVersions() {
-		assertThat(this.gradleBuild.script("src/main/gradle/managing-dependencies/custom-version").build("slf4jVersion")
+	void customManagedVersions() {
+		assertThat(this.gradleBuild.script("src/docs/gradle/managing-dependencies/custom-version").build("slf4jVersion")
 				.getOutput()).contains("1.7.20");
 	}
 
 	@TestTemplate
-	public void dependencyManagementInIsolation() {
-		assertThat(this.gradleBuild.script("src/main/gradle/managing-dependencies/configure-bom")
+	void dependencyManagementInIsolation() {
+		assertThat(this.gradleBuild.script("src/docs/gradle/managing-dependencies/configure-bom")
 				.build("dependencyManagement").getOutput()).contains("org.springframework.boot:spring-boot-starter ");
 	}
 
 	@TestTemplate
-	public void dependencyManagementInIsolationWithPluginsBlock() {
+	void dependencyManagementInIsolationWithPluginsBlock() {
 		assumingThat(this.gradleBuild.getDsl() == Dsl.KOTLIN,
 				() -> assertThat(
-						this.gradleBuild.script("src/main/gradle/managing-dependencies/configure-bom-with-plugins")
+						this.gradleBuild.script("src/docs/gradle/managing-dependencies/configure-bom-with-plugins")
 								.build("dependencyManagement").getOutput())
 										.contains("org.springframework.boot:spring-boot-starter TEST-SNAPSHOT"));
 	}
