@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.boot.gradle.junit;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -43,12 +42,14 @@ public final class GradleCompatibilityExtension implements TestTemplateInvocatio
 	private static final List<String> GRADLE_VERSIONS;
 
 	static {
-		if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_13)) {
-			GRADLE_VERSIONS = Collections.singletonList("default");
+		if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_14)) {
+			GRADLE_VERSIONS = Arrays.asList("default");
+		}
+		else if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_13)) {
+			GRADLE_VERSIONS = Arrays.asList("6.0.1", "6.1.1", "6.2.2", "default");
 		}
 		else {
-			GRADLE_VERSIONS = Arrays.asList("4.10.3", "5.0", "5.1.1", "5.2.1", "5.3.1", "5.4.1", "5.5.1", "5.6.4",
-					"default");
+			GRADLE_VERSIONS = Arrays.asList("5.6.4", "6.0.1", "6.1.1", "6.2.2", "default");
 		}
 	}
 

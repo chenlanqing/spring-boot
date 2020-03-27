@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ class AsciidoctorConventions {
 				asciidoctorTask.baseDirFollowsSourceDir();
 				Sync syncSource = createSyncDocumentationSourceTask(project, asciidoctorTask);
 				if (asciidoctorTask instanceof AsciidoctorTask) {
-					configureHtmlOnlyAttributes(project, asciidoctorTask);
+					configureHtmlOnlyAttributes(asciidoctorTask);
 					syncSource.from(unzipResources, (resources) -> resources.into("asciidoc"));
 					asciidoctorTask.doFirst(new Action<Task>() {
 
@@ -112,7 +112,7 @@ class AsciidoctorConventions {
 	private UnzipDocumentationResources createUnzipDocumentationResourcesTask(Project project) {
 		Configuration documentationResources = project.getConfigurations().maybeCreate("documentationResources");
 		documentationResources.getDependencies()
-				.add(project.getDependencies().create("io.spring.docresources:spring-doc-resources:0.1.3.RELEASE"));
+				.add(project.getDependencies().create("io.spring.docresources:spring-doc-resources:0.2.0.RELEASE"));
 		UnzipDocumentationResources unzipResources = project.getTasks().create("unzipDocumentationResources",
 				UnzipDocumentationResources.class);
 		unzipResources.setResources(documentationResources);
@@ -135,7 +135,7 @@ class AsciidoctorConventions {
 		asciidoctorTask.options(Collections.singletonMap("doctype", "book"));
 	}
 
-	private void configureHtmlOnlyAttributes(Project project, AbstractAsciidoctorTask asciidoctorTask) {
+	private void configureHtmlOnlyAttributes(AbstractAsciidoctorTask asciidoctorTask) {
 		Map<String, Object> attributes = new HashMap<>();
 		attributes.put("highlightjsdir", "js/highlight");
 		attributes.put("highlightjs-theme", "github");

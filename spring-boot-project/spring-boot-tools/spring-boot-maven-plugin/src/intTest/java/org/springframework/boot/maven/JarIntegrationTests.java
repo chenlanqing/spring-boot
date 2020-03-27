@@ -16,9 +16,17 @@
 package org.springframework.boot.maven;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.TestTemplate;
 import org.junit.jupiter.api.extension.ExtendWith;
+
+import org.springframework.boot.loader.tools.FileUtils;
+import org.springframework.util.FileSystemUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Integration tests for the Maven plugin's jar support.
  *
  * @author Andy Wilkinson
+ * @author Madhura Bhave
  */
 @ExtendWith(MavenBuildExtension.class)
 class JarIntegrationTests extends AbstractArchiveIntegrationTests {
@@ -278,6 +287,72 @@ class JarIntegrationTests extends AbstractArchiveIntegrationTests {
 			assertThat(jar(new File(project, "default/target/default-0.0.1.BUILD-SNAPSHOT.jar")))
 					.hasEntryWithName("sample");
 		});
+	}
+
+	@TestTemplate
+	void whenJarIsRepackagedWithTheLayeredLayoutTheJarContainsLayers(MavenBuild mavenBuild) {
+		mavenBuild.project("jar-layered").execute((project) -> {
+			File repackaged = new File(project, "jar/target/jar-layered-0.0.1.BUILD-SNAPSHOT.jar");
+			assertThat(jar(repackaged)).hasEntryWithNameStartingWith("BOOT-INF/layers/application/classes/")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/dependencies/lib/jar-release")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/snapshot-dependencies/lib/jar-snapshot")
+					.hasEntryWithNameStartingWith(
+							"BOOT-INF/layers/dependencies/lib/spring-boot-jarmode-layertools.jar");
+		});
+	}
+
+	@TestTemplate
+	void whenJarIsRepackagedWithTheLayeredLayoutAndLayerToolsExcluded(MavenBuild mavenBuild) {
+		mavenBuild.project("jar-layered-no-layer-tools").execute((project) -> {
+			File repackaged = new File(project, "jar/target/jar-layered-0.0.1.BUILD-SNAPSHOT.jar");
+			assertThat(jar(repackaged)).hasEntryWithNameStartingWith("BOOT-INF/layers/application/classes/")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/dependencies/lib/jar-release")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/snapshot-dependencies/lib/jar-snapshot")
+					.doesNotHaveEntryWithNameStartingWith(
+							"BOOT-INF/layers/dependencies/lib/spring-boot-jarmode-layertools.jar");
+		});
+	}
+
+	@TestTemplate
+	void whenJarIsRepackagedWithTheCustomLayeredLayout(MavenBuild mavenBuild) {
+		mavenBuild.project("jar-layered-custom").execute((project) -> {
+			File repackaged = new File(project, "jar/target/jar-layered-0.0.1.BUILD-SNAPSHOT.jar");
+			assertThat(jar(repackaged)).hasEntryWithNameStartingWith("BOOT-INF/layers/application/classes/")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/my-dependencies-name/lib/jar-release")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/snapshot-dependencies/lib/jar-snapshot")
+					.hasEntryWithNameStartingWith("BOOT-INF/layers/configuration/classes/application.yml");
+		});
+	}
+
+	@TestTemplate
+	void whenJarIsRepackagedWithOutputTimestampConfiguredThenJarIsReproducible(MavenBuild mavenBuild)
+			throws InterruptedException {
+		String firstHash = buildJarWithOutputTimestamp(mavenBuild);
+		Thread.sleep(1500);
+		String secondHash = buildJarWithOutputTimestamp(mavenBuild);
+		assertThat(firstHash).isEqualTo(secondHash);
+	}
+
+	private String buildJarWithOutputTimestamp(MavenBuild mavenBuild) {
+		AtomicReference<String> jarHash = new AtomicReference<>();
+		mavenBuild.project("jar-output-timestamp").execute((project) -> {
+			File repackaged = new File(project, "target/jar-output-timestamp-0.0.1.BUILD-SNAPSHOT.jar");
+			assertThat(repackaged).isFile();
+			assertThat(repackaged.lastModified()).isEqualTo(1584352800000L);
+			try (JarFile jar = new JarFile(repackaged)) {
+				List<String> unreproducibleEntries = jar.stream()
+						.filter((entry) -> entry.getLastModifiedTime().toMillis() != 1584352800000L)
+						.map((entry) -> entry.getName() + ": " + entry.getLastModifiedTime())
+						.collect(Collectors.toList());
+				assertThat(unreproducibleEntries).isEmpty();
+				jarHash.set(FileUtils.sha1Hash(repackaged));
+				FileSystemUtils.deleteRecursively(project);
+			}
+			catch (IOException ex) {
+				throw new RuntimeException(ex);
+			}
+		});
+		return jarHash.get();
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 
 import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.testcontainers.containers.GenericContainer;
@@ -44,7 +43,7 @@ import static org.hamcrest.Matchers.containsString;
  * @author Andy Wilkinson
  * @author Ali Shahbour
  */
-@ExtendWith(DisabledIfDockerUnavailable.class)
+@DisabledIfDockerUnavailable
 class SysVinitLaunchScriptIntegrationTests {
 
 	private static final char ESC = 27;

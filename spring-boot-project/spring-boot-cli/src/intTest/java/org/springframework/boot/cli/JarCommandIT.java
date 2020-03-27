@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class JarCommandIT {
 		invocation.await();
 		assertThat(invocation.getStandardOutput()).isEqualTo("");
 		assertThat(invocation.getErrorOutput())
-				.contains("The name of the " + "resulting jar and at least one source file must be specified");
+				.contains("The name of the resulting jar and at least one source file must be specified");
 	}
 
 	@Test
@@ -64,7 +64,7 @@ class JarCommandIT {
 		invocation.await();
 		assertThat(invocation.getStandardOutput()).isEqualTo("");
 		assertThat(invocation.getErrorOutput())
-				.contains("The name of the " + "resulting jar and at least one source file must be specified");
+				.contains("The name of the resulting jar and at least one source file must be specified");
 	}
 
 	@Test

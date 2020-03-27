@@ -12,7 +12,7 @@ Packaging an executable archive is performed by the `repackage` goal, as shown i
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>{version}</version>
+				<version>{gradle-project-version}</version>
 				<executions>
 					<execution>
 						<goals>
@@ -47,7 +47,7 @@ The "Main-Class" in the manifest is actually controlled by the "layout" property
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>{version}</version>
+				<version>{gradle-project-version}</version>
 				<configuration>
 					<mainClass>${start.class}</mainClass>
 					<layout>ZIP</layout>
@@ -71,10 +71,127 @@ The `layout` property defaults to a guess based on the archive type (`jar` or `w
 * `ZIP` (alias to `DIR`): similar to the `JAR` layout using `PropertiesLauncher`.
 * `NONE`: Bundle all dependencies and project resources. Does not bundle a bootstrap loader.
 
+[[repackage-layers]]
+=== Layered jar
+
+By default, a repackaged jar contains the application's classes and dependencies in `BOOT-INF/classes` and `BOOT-INF/lib` respectively.
+For cases where a docker image needs to be built from the contents of the jar, the jar format can be enhanced to support layer folders.
+To use this feature, the layering feature must be enabled:
+
+[source,xml,indent=0,subs="verbatim,attributes"]
+----
+	<project>
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<version>{gradle-project-version}</version>
+					<configuration>
+						<layers>
+							<enabled>true</enabled>
+						</layers>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+	</project>
+----
+
+By default, the following layers are created:
+
+* `dependencies` for any dependency whose version does not contain `SNAPSHOT`.
+* `snapshot-dependencies` for any dependency whose version contains `SNAPSHOT`.
+* `application` for application classes and resources.
+
+The layers order is important as it determines how likely previous layers can be cached when part of the application changes.
+The default order is `dependencies`, `snapshot-dependencies`, and `application`.
+Content that is least likely to change should be added first, followed by layers that are more likely to change.
+
+
+
+[[repackage-layers-configuration]]
+==== Custom Layers configuration
+Depending on your application, you may want to tune how layers are created and add new ones.
+This can be done using a separate configuration file that should be registered as shown in the following example:
+
+[source,xml,indent=0,subs="verbatim,attributes"]
+----
+	<project>
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<version>{gradle-project-version}</version>
+					<configuration>
+						<layers>
+							<enabled>true</enabled>
+							<configuration>${project.basedir}/src/layers.xml</configuration>
+						</layers>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+	</project>
+----
+
+The configuration file lists the layers and their order as well as the strategies to apply to libraries and classes.
+The following example shows what the implicit layer configuration described above does:
+
+[source,xml,indent=0,subs="verbatim,attributes"]
+----
+<layers-configuration xmlns="http://www.springframework.org/schema/boot/layers"
+					  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+					  xsi:schemaLocation="http://www.springframework.org/schema/boot/layers
+                      https://www.springframework.org/schema/boot/layers/layers-configuration-{spring-boot-xsd-version}.xsd">
+	<layers>
+		<layer>dependencies</layer>
+		<layer>snapshot-dependencies</layer>
+		<layer>application</layer>
+    </layers>
+	<libraries>
+		<layer-content layer="snapshot-dependencies">
+			<coordinates>
+				<include>*:*:*SNAPSHOT</include>
+			</coordinates>
+		</layer-content>
+		<layer-content layer="dependencies">
+			<coordinates>
+				<include>*:*</include>
+			</coordinates>
+		</layer-content>
+	</libraries>
+	<application>
+		<layer-content layer="application">
+			<locations>
+				<include>**</include>
+			</locations>
+		</layer-content>
+	</application>
+</layers-configuration>
+----
+
+Each `layer-content` element defines a strategy to include or exclude an entry of the jar in a layer.
+When an entry matches a strategy, it is included in the layer and further strategies are ignored.
+This is illustrated by the `dependencies` layer that has a "catch-all" include filter used to add any libraries that were not processed by previous strategies.
+
+The content of a `libraries` layer can be customized using filters to `include` or `exclude` based on the dependency coordinates.
+The format is `groupId:artifactId[:version]`.
+In the example above, any artifact whose version ends with `SNAPSHOT` is going to be included in the `snapshot-dependencies` layer.
+
+The content of an `application` layer can be customized using filters to `include` or `exclude` based on location of the entry using Ant-style pattern matching.
+
+
+
 include::goals/repackage.adoc[leveloffset=+1]
+
+
 
 [[repackage-examples]]
 === Examples
+
+
 
 [[repackage-example-custom-classifier]]
 ==== Custom Classifier
@@ -92,7 +209,7 @@ If that is the case or if you prefer to keep the original artifact and attach th
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<executions>
 						<execution>
 							<id>repackage</id>
@@ -165,7 +282,7 @@ The following configuration installs/deploys a single `task` classified artifact
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<executions>
 						<execution>
 							<id>repackage</id>
@@ -235,7 +352,7 @@ If you need the repackaged jar to have a different local name than the one defin
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<executions>
 						<execution>
 							<id>repackage</id>
@@ -267,7 +384,7 @@ If you need to only deploy the original jar and yet be able to run your app with
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<executions>
 						<execution>
 							<id>repackage</id>
@@ -302,7 +419,7 @@ Spring Boot repackages the jar file for this project using a custom layout facto
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<executions>
 						<execution>
 							<id>repackage</id>
@@ -332,7 +449,7 @@ Spring Boot repackages the jar file for this project using a custom layout facto
 The layout factory is provided as an implementation of `LayoutFactory` (from `spring-boot-loader-tools`) explicitly specified in the pom.
 If there is only one custom `LayoutFactory` on the plugin classpath and it is listed in `META-INF/spring.factories` then it is unnecessary to explicitly set it in the plugin configuration.
 
-Layout factories are always ignored if an explicit <<goals-repackage-optional-parameters-layout,layout>> is set.
+Layout factories are always ignored if an explicit <<goals-repackage-parameters-details-layoutFactory,layout>> is set.
 
 
 
@@ -359,7 +476,7 @@ The following example excludes `com.foo:bar`, and only that artifact:
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<configuration>
 						<excludes>
 							<exclude>
@@ -384,7 +501,7 @@ This example excludes any artifact belonging to the `com.foo` group:
 				<plugin>
 					<groupId>org.springframework.boot</groupId>
 					<artifactId>spring-boot-maven-plugin</artifactId>
-					<version>{version}</version>
+					<version>{gradle-project-version}</version>
 					<configuration>
 						<excludeGroupIds>com.foo</excludeGroupIds>
 					</configuration>
@@ -393,3 +510,79 @@ This example excludes any artifact belonging to the `com.foo` group:
 		</build>
 	</project>
 ----
+
+
+
+[[repackage-layered-jars-tools]]
+==== Layered jar tools
+
+When you create a layered jar, the `spring-boot-jarmode-layertools` jar will be added as a dependency to your jar.
+With this jar on the classpath, you can launch your application in a special mode which allows the bootstrap code to run something entirely different from your application, for example, something that extracts the layers.
+If you wish to exclude this dependency, you can do so in the following manner:
+
+[source,xml,indent=0,subs="verbatim,attributes"]
+----
+	<project>
+		<build>
+			<plugins>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+					<version>{gradle-project-version}</version>
+					<configuration>
+						<layers>
+							<enabled>true</enabled>
+							<includeLayerTools>false</enabled>
+						</layers>
+					</configuration>
+				</plugin>
+			</plugins>
+		</build>
+	</project>
+----
+
+
+
+[[repackage-layered-jars-additional-layers]]
+==== Custom layers configuration
+
+While the default setup creates two layers for libraries, you may want to isolate the dependencies of your project in a dedicated layer.
+This allows to reuse the cache for external dependencies when an internal dependency has changed, as shown by the following example:
+
+[source,xml,indent=0,subs="verbatim,attributes"]
+----
+	<layers-configuration xmlns="http://www.springframework.org/schema/boot/layers"
+						  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+						  xsi:schemaLocation="http://www.springframework.org/schema/boot/layers
+						  https://www.springframework.org/schema/boot/layers/layers-configuration-{spring-boot-xsd-version}.xsd">
+		<layers>
+			<layer>application</layer>
+			<layer>resources</layer>
+			<layer>snapshots</layer>
+			<layer>company-dependencies</layer>
+			<layer>dependencies</layer>
+		</layers>
+		<libraries>
+			<layer-content layer="snapshot-dependencies">
+				<coordinates>
+					<include>*:*:*SNAPSHOT</include>
+				</coordinates>
+			</layer-content>
+			<layer-content layer="company-dependencies">
+				<coordinates>
+					<include>com.acme:*</include>
+				</coordinates>
+			</layer-content>
+			<layer-content layer="dependencies">
+				<coordinates>
+					<include>*:*</include>
+				</coordinates>
+			</layer-content>
+		</libraries>
+		<application>
+			...
+		</application>
+	</layers-configuration>
+----
+
+The configuration above creates an additional `company-dependencies` layer with all libraries with the `com.acme` groupId.

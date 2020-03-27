@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.gradle.api.plugins.PluginContainer;
 
 import org.springframework.boot.build.ConventionsPlugin;
 import org.springframework.boot.build.DeployedPlugin;
+import org.springframework.boot.build.InternalDependencyManagementPlugin;
 import org.springframework.boot.build.classpath.CheckClasspathForConflicts;
 import org.springframework.boot.build.classpath.CheckClasspathForProhibitedDependencies;
 import org.springframework.util.StringUtils;
@@ -46,6 +47,7 @@ public class StarterPlugin implements Plugin<Project> {
 		plugins.apply(DeployedPlugin.class);
 		plugins.apply(JavaLibraryPlugin.class);
 		plugins.apply(ConventionsPlugin.class);
+		plugins.apply(InternalDependencyManagementPlugin.class);
 		StarterMetadata starterMetadata = project.getTasks().create("starterMetadata", StarterMetadata.class);
 		ConfigurationContainer configurations = project.getConfigurations();
 		Configuration runtimeClasspath = configurations.getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);

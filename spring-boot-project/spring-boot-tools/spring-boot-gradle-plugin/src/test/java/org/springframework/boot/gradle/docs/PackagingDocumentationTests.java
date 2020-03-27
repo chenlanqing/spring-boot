@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,6 +176,18 @@ class PackagingDocumentationTests {
 		File bootJar = new File(this.gradleBuild.getProjectDir(),
 				"build/libs/" + this.gradleBuild.getProjectDir().getName() + "-boot.jar");
 		assertThat(bootJar).isFile();
+	}
+
+	@TestTemplate
+	void bootJarLayered() throws IOException {
+		this.gradleBuild.script("src/docs/gradle/packaging/boot-jar-layered").build("bootJar");
+		File file = new File(this.gradleBuild.getProjectDir(),
+				"build/libs/" + this.gradleBuild.getProjectDir().getName() + ".jar");
+		assertThat(file).isFile();
+		try (JarFile jar = new JarFile(file)) {
+			JarEntry entry = jar.getJarEntry("BOOT-INF/layers.idx");
+			assertThat(entry).isNotNull();
+		}
 	}
 
 	protected void jarFile(File file) throws IOException {

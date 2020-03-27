@@ -41,7 +41,7 @@ Explicit build support is provided for the following build tools:
 | 3.3+
 
 | Gradle
-| 5.x and 6.x (4.10 is also supported but in a deprecated form)
+| 6.x (5.6 is also supported but in a deprecated form)
 |===
 
 
@@ -195,8 +195,8 @@ In those cases, see <<using-spring-boot.adoc#using-boot-maven-without-a-parent>>
 
 [[getting-started-gradle-installation]]
 ==== Gradle Installation
-Spring Boot is compatible with 5.x and 6.x.
-4.10 is also supported but this support is deprecated and will be removed in a future release.
+Spring Boot is compatible with 6.x.
+5.6 is also supported but this support is deprecated and will be removed in a future release.
 If you do not already have Gradle installed, you can follow the instructions at https://gradle.org.
 
 Spring Boot dependencies can be declared by using the `org.springframework.boot` `group`.
@@ -703,7 +703,7 @@ To do so, insert the following lines just below the `dependencies` section:
 
 NOTE: The `spring-boot-starter-parent` POM includes `<executions>` configuration to bind the `repackage` goal.
 If you do not use the parent POM, you need to declare this configuration yourself.
-See the {spring-boot-maven-plugin-docs}/usage.html[plugin documentation] for details.
+See the {spring-boot-maven-plugin-docs}#getting-started[plugin documentation] for details.
 
 Save your `pom.xml` and run `mvn package` from the command line, as follows:
 
