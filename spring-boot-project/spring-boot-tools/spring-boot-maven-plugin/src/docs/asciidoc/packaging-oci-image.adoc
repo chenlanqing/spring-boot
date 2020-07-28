@@ -1,5 +1,5 @@
 [[build-image]]
-== Packaging OCI images
+== Packaging OCI Images
 The plugin can create an https://github.com/opencontainers/image-spec[OCI image] using https://buildpacks.io/[Cloud Native Buildpacks].
 Images can be built using the `build-image` goal.
 
@@ -32,7 +32,7 @@ When the `build-image` repackages the application, it applies the same settings 
 
 
 [[build-image-docker-daemon]]
-=== Docker daemon
+=== Docker Daemon
 The `build-image` goal requires access to a Docker daemon.
 By default, it will communicate with a Docker daemon over a local connection.
 This works with https://docs.docker.com/install/[Docker Engine] on all supported platforms without configuration.
@@ -43,13 +43,13 @@ The following table shows the environment variables and their values:
 |===
 | Environment variable | Description
 
-| DOCKER_HOST 
+| DOCKER_HOST
 | URL containing the host and port for the Docker daemon - e.g. `tcp://192.168.99.100:2376`
 
-| DOCKER_TLS_VERIFY 
+| DOCKER_TLS_VERIFY
 | Enable secure HTTPS protocol when set to `1` (optional)
 
-| DOCKER_CERT_PATH 
+| DOCKER_CERT_PATH
 | Path to certificate and key files for HTTPS (required if `DOCKER_TLS_VERIFY=1`, ignored otherwise)
 |===
 
@@ -58,13 +58,13 @@ On Linux and macOS, these environment variables can be set using the command `ev
 
 
 [[build-image-customization]]
-=== Image customizations
+=== Image Customizations
 The plugin invokes a {buildpacks-reference}/concepts/components/builder/[builder] to orchestrate the generation of an image.
 The builder includes multiple {buildpacks-reference}/concepts/components/buildpack[buildpacks] that can inspect the application to influence the generated image.
 By default, the plugin chooses a builder image.
 The name of the generated image is deduced from project properties.
 
-The `image` parameter allows to configure how the builder should operate on the project.
+The `image` parameter allows configuration of the builder and how it should operate on the project.
 The following table summarizes the available parameters and their default values:
 
 |===
@@ -73,7 +73,12 @@ The following table summarizes the available parameters and their default values
 | `builder`
 | Name of the Builder image to use.
 | `spring-boot.build-image.builder`
-| `cloudfoundry/cnb:bionic-platform-api-0.2`
+| `gcr.io/paketo-buildpacks/builder:base-platform-api-0.3`
+
+| `runImage`
+| Name of the run image to use.
+| `spring-boot.build-image.runImage`
+| No default value, indicating the run image specified in Builder metadata should be used.
 
 | `name`
 | {spring-boot-api}/buildpack/platform/docker/type/ImageReference.html#of-java.lang.String-[Image name] for the generated image.
@@ -108,8 +113,8 @@ include::goals/build-image.adoc[leveloffset=+1]
 
 
 [[build-image-example-custom-image-builder]]
-==== Custom image builder
-If you need to customize the builder used to create the image, configure the plugin as shown in the following example:
+==== Custom Image Builder
+If you need to customize the builder used to create the image or the run image used to launch the built image, configure the plugin as shown in the following example:
 
 [source,xml,indent=0,subs="verbatim,attributes"]
 ----
@@ -123,6 +128,7 @@ If you need to customize the builder used to create the image, configure the plu
 					<configuration>
 						<image>
 							<builder>mine/java-cnb-builder</builder>
+							<runImage>mine/java-cnb-run</runImage>
 						</image>
 					</configuration>
 				</plugin>
@@ -131,20 +137,22 @@ If you need to customize the builder used to create the image, configure the plu
 	</project>
 ----
 
-This configuration will use a builder image with the name `mine/java-cnb-builder` and the tag `latest`.
+This configuration will use a builder image with the name `mine/java-cnb-builder` and the tag `latest`, and the run image named `mine/java-cnb-run` and the tag `latest`.
 
-The builder can be specified on the command line as well, as shown in this example:
+The builder and run image can be specified on the command line as well, as shown in this example:
 
 [indent=0]
 ----
-	$ mvn spring-boot:build-image -Dspring-boot.build-image:builder=mine/java-cnb-builder
+	$ mvn spring-boot:build-image -Dspring-boot.build-image.builder=mine/java-cnb-builder -Dspring-boot.build-image.runImage=mine/java-cnb-run
 ----
 
+
+
 [[build-image-example-builder-configuration]]
-==== Builder configuration
+==== Builder Configuration
 If the builder exposes configuration options using environment variables, those can be set using the `env` attributes.
 
-The following example assumes that the default builder defines a `BP_JAVA_VERSION` property (typically used to customize the JDK version the image should use):
+The following example assumes that the default builder defines a `BP_JVM_VERSION` property (typically used to customize the JDK version the image should use):
 
 [source,xml,indent=0,subs="verbatim,attributes"]
 ----
@@ -158,7 +166,7 @@ The following example assumes that the default builder defines a `BP_JAVA_VERSIO
 					<configuration>
 						<image>
 							<env>
-								<BP_JAVA_VERSION>13.0.1</BP_JAVA_VERSION>
+								<BP_JVM_VERSION>13.0.1</BP_JVM_VERSION>
 							</env>
 						</image>
 					</configuration>
@@ -197,7 +205,7 @@ When using the default builder, this can be accomplished by setting the `HTTPS_P
 
 
 [[build-image-example-custom-image-name]]
-==== Custom image name
+==== Custom Image Name
 By default, the image name is inferred from the `artifactId` and the `version` of the project, something like `docker.io/library/${project.artifactId}:${project.version}`.
 You can take control over the name, as shown in the following example:
 
@@ -228,6 +236,6 @@ The image name can be specified on the command line as well, as shown in this ex
 
 [indent=0]
 ----
-	$ mvn spring-boot:build-image -Dspring-boot.build-image:imageName=example.com/library/v1
+	$ mvn spring-boot:build-image -Dspring-boot.build-image.imageName=example.com/library/my-app:v1
 ----
 
